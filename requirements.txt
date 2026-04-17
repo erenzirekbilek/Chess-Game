@@ -1,0 +1,8 @@
+Django>=5.0
+djangorestframework>=3.14
+djangorestframework-simplejwt>=5.3
+channels>=4.0
+django-cors-headers>=4.0
+python-chess>=1.9
+numpy>=1.24
+pyjwt>=2.8
