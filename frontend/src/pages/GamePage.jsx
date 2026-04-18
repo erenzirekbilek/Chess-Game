@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { Chess } from "chess.js";
 import ChessBoard from "../components/Board/ChessBoard";
-import { createGame, getGame, makeMove, resignGame } from "../api/games";
+import { createGame, makeMove, resignGame } from "../api/games";
 
 export default function GamePage() {
   const [gameId, setGameId] = useState(null);
-  const [fen, setFen] = useState(null);
+  const [fen, setFen] = useState("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
   const [currentTurn, setCurrentTurn] = useState("white");
   const [gameStatus, setGameStatus] = useState(null);
   const [difficulty, setDifficulty] = useState("medium");
@@ -13,56 +13,78 @@ export default function GamePage() {
   const [gameOver, setGameOver] = useState(false);
   const [result, setResult] = useState(null);
   const [boardOrientation, setBoardOrientation] = useState("white");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [playerColor, setPlayerColor] = useState("white");
 
   const startNewGame = async (diff = "medium") => {
+    setLoading(true);
+    setError(null);
+    setGameOver(false);
+    setResult(null);
+    
     try {
-      setDifficulty(diff);
       const game = await createGame("vs_ai", diff, "black");
       setGameId(game.id);
       setFen(game.fen);
       setCurrentTurn(game.current_turn);
       setGameStatus(game.status);
-      setGameOver(false);
-      setResult(null);
-    } catch (error) {
-      console.error("Error creating game:", error);
+      setPlayerColor("white");
+    } catch (err) {
+      console.error("Error creating game:", err);
+      setError("Failed to connect to server. Playing offline mode.");
+      setGameId(null);
+      setFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleMove = async (move) => {
-    if (!gameId || isThinking || gameOver) return;
+    if (isThinking || gameOver) return;
+    
+    setIsThinking(true);
 
     try {
-      const response = await makeMove(gameId, move.to);
+      if (gameId) {
+        const uci = move.from + move.to;
+        const response = await makeMove(gameId, uci);
 
-      if (response.fen) {
-        setFen(response.fen);
-        setCurrentTurn(response.turn);
-
-        if (response.is_checkmate) {
-          setGameOver(true);
-          setResult(response.is_checkmate ? "You Win!" : "You Lose!");
-        } else if (response.is_stalemate) {
-          setGameOver(true);
-          setResult("Draw!");
-        }
-      }
-
-      if (response.ai_move) {
-        setIsThinking(true);
-        setTimeout(() => {
-          setFen(response.ai_fen);
-          setCurrentTurn(response.turn);
-          setIsThinking(false);
+        if (response.fen) {
+          setFen(response.fen);
+          setCurrentTurn(response.turn || (currentTurn === "white" ? "black" : "white"));
 
           if (response.is_checkmate) {
             setGameOver(true);
-            setResult("You Lose!");
+            setResult("You Win!");
+          } else if (response.is_stalemate) {
+            setGameOver(true);
+            setResult("Draw!");
           }
-        }, 500);
+        }
+
+        if (response.ai_move) {
+          setTimeout(() => {
+            setFen(response.ai_fen);
+            setCurrentTurn(response.turn || "white");
+            
+            if (response.is_checkmate) {
+              setGameOver(true);
+              setResult("You Lose!");
+            }
+            setIsThinking(false);
+          }, 500);
+        } else {
+          setIsThinking(false);
+        }
+      } else {
+        setCurrentTurn(currentTurn === "white" ? "black" : "white");
+        setIsThinking(false);
       }
-    } catch (error) {
-      console.error("Error making move:", error);
+    } catch (err) {
+      console.error("Error making move:", err);
+      setCurrentTurn(currentTurn === "white" ? "black" : "white");
+      setIsThinking(false);
     }
   };
 
@@ -103,6 +125,9 @@ export default function GamePage() {
           </select>
         </div>
       </div>
+
+      {loading && <div className="thinking-indicator">Starting game...</div>}
+      {error && <div className="error-message">{error}</div>}
 
       {isThinking && (
         <div className="thinking-indicator">AI is thinking...</div>

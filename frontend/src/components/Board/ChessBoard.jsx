@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 
@@ -6,69 +6,68 @@ export default function ChessBoard({
   fen,
   onMove,
   boardOrientation = "white",
-  showDots = true,
   boardWidth = 400,
 }) {
-  const [game, setGame] = useState(() => {
+  const gameRef = useRef(new Chess());
+  const [position, setPosition] = useState("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+
+  useEffect(() => {
     if (fen) {
-      const g = new Chess();
-      g.load(fen);
-      return g;
+      try {
+        gameRef.current.load(fen);
+        setPosition(fen);
+      } catch (e) {
+        console.error("Invalid FEN:", e);
+      }
     }
-    return new Chess();
-  });
+  }, [fen]);
 
   const onPieceDrop = useCallback(
     (sourceSquare, targetSquare) => {
       try {
+        const game = gameRef.current;
+        
         const move = game.move({
           from: sourceSquare,
           to: targetSquare,
           promotion: "q",
         });
 
-        if (move === null) return false;
+        if (move === null) {
+          return false;
+        }
 
-        setGame(new Chess(game.fen()));
+        setPosition(game.fen());
 
         if (onMove) {
-          onMove(move);
+          onMove({
+            from: sourceSquare,
+            to: targetSquare,
+            san: move.san,
+          });
         }
 
         return true;
       } catch (error) {
+        console.error("Move error:", error);
         return false;
       }
     },
-    [game, onMove]
+    [onMove]
   );
 
-  const getCustomPieces = useCallback(() => {
-    const pieces = {};
-    const pieceTypes = ["p", "n", "b", "r", "q", "k"];
-
-    pieceTypes.forEach((type) => {
-      pieces[`w${type}`] = require(`../assets/w${type}.png`).default;
-      pieces[`b${type}`] = require(`../assets/b${type}.png`).default;
-    });
-
-    return pieces;
-  }, []);
-
   return (
-    <div className="chess-board-container">
+    <div style={{ display: "flex", justifyContent: "center", padding: "20px" }}>
       <Chessboard
         id="basic-board"
-        position={fen || game.fen()}
+        position={position}
         onPieceDrop={onPieceDrop}
         boardOrientation={boardOrientation}
         boardWidth={boardWidth}
         customBoardStyle={{
-          borderRadius: "4px",
-          boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
+          borderRadius: "8px",
+          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
         }}
-        customPieces={getCustomPieces()}
-        showPromotionDialog={true}
       />
     </div>
   );

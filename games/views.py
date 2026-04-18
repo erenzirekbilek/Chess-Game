@@ -143,6 +143,7 @@ class GameViewSet(viewsets.ModelViewSet):
 
             response_data = {
                 "fen": new_fen,
+                "turn": "white" if board.turn == chess.WHITE else "black",
                 "move": uci,
                 "san": san,
                 "is_checkmate": board.is_checkmate(),
@@ -201,6 +202,7 @@ class GameViewSet(viewsets.ModelViewSet):
                         game.save()
                         response_data["ai_move"] = ai_uci
                         response_data["ai_fen"] = ai_fen
+                        response_data["turn"] = "white" if board.turn == chess.WHITE else "black"
 
             return Response(response_data)
 
