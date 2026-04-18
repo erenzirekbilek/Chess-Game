@@ -1,4 +1,4 @@
-from rest_framework import status, viewsets
+from rest_framework import status, viewsets, views
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -73,7 +73,7 @@ class UserViewSet(viewsets.ModelViewSet):
         )
 
 
-class LogoutView(viewsets.View):
+class LogoutView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
