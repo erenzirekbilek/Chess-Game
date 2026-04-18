@@ -1,4 +1,4 @@
-from .engine import ChessEngine
+from .engine import ChessEngine, create_engine
 from .minimax import minimax
 from .alphabeta import alpha_beta_search
 from .mcts import MCTS, MCTSNode
@@ -14,6 +14,7 @@ from .tablebases import Tablebase
 
 __all__ = [
     "ChessEngine",
+    "create_engine",
     "minimax",
     "alpha_beta_search",
     "MCTS",

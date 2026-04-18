@@ -43,10 +43,7 @@ class GameViewSet(viewsets.ModelViewSet):
         ai_color = serializer.validated_data.get("ai_color", "black")
 
         if game_type == GameType.VS_AI:
-            import random
-
-            player_color = ai_color if ai_color else random.choice(["white", "black"])
-            ai_color = "black" if player_color == "white" else "white"
+            player_color = "white" if ai_color == "black" else "black"
         else:
             player_color = "white"
             ai_color = ""
