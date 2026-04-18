@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Chess } from "chess.js";
+import { useCallback, useEffect, useRef } from "react";
 import { Chessboard } from "react-chessboard";
 
 export default function ChessBoard({
@@ -9,52 +8,18 @@ export default function ChessBoard({
   boardWidth = 450,
   arePiecesDraggable = true,
 }) {
-  const gameRef = useRef(new Chess());
-  const [position, setPosition] = useState("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-
-  useEffect(() => {
-    if (fen) {
-      try {
-        gameRef.current.load(fen);
-        setPosition(fen);
-      } catch (e) {
-        console.error("Invalid FEN:", e);
-      }
-    }
-  }, [fen]);
-
   const onPieceDrop = useCallback(
     (sourceSquare, targetSquare) => {
       if (!arePiecesDraggable) return false;
       
-      try {
-        const game = gameRef.current;
-        
-        const move = game.move({
+      if (onMove) {
+        onMove({
           from: sourceSquare,
           to: targetSquare,
-          promotion: "q",
         });
-
-        if (move === null) {
-          return false;
-        }
-
-        setPosition(game.fen());
-
-        if (onMove) {
-          onMove({
-            from: sourceSquare,
-            to: targetSquare,
-            san: move.san,
-          });
-        }
-
-        return true;
-      } catch (error) {
-        console.error("Move error:", error);
-        return false;
       }
+
+      return true;
     },
     [onMove, arePiecesDraggable]
   );
@@ -69,7 +34,7 @@ export default function ChessBoard({
     }}>
       <Chessboard
         id="basic-board"
-        position={position}
+        position={fen}
         onPieceDrop={onPieceDrop}
         boardOrientation={boardOrientation}
         boardWidth={boardWidth}
