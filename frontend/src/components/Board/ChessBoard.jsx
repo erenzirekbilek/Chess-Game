@@ -6,7 +6,8 @@ export default function ChessBoard({
   fen,
   onMove,
   boardOrientation = "white",
-  boardWidth = 400,
+  boardWidth = 450,
+  arePiecesDraggable = true,
 }) {
   const gameRef = useRef(new Chess());
   const [position, setPosition] = useState("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -24,6 +25,8 @@ export default function ChessBoard({
 
   const onPieceDrop = useCallback(
     (sourceSquare, targetSquare) => {
+      if (!arePiecesDraggable) return false;
+      
       try {
         const game = gameRef.current;
         
@@ -53,21 +56,30 @@ export default function ChessBoard({
         return false;
       }
     },
-    [onMove]
+    [onMove, arePiecesDraggable]
   );
 
   return (
-    <div style={{ display: "flex", justifyContent: "center", padding: "20px" }}>
+    <div style={{ 
+      display: "flex", 
+      justifyContent: "center", 
+      padding: "20px",
+      background: "#2d2d2d",
+      borderRadius: "12px",
+    }}>
       <Chessboard
         id="basic-board"
         position={position}
         onPieceDrop={onPieceDrop}
         boardOrientation={boardOrientation}
         boardWidth={boardWidth}
+        arePiecesDraggable={arePiecesDraggable}
         customBoardStyle={{
           borderRadius: "8px",
-          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
+          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
         }}
+        customDarkSquareStyle={{ backgroundColor: "#769656" }}
+        customLightSquareStyle={{ backgroundColor: "#eeeed2" }}
       />
     </div>
   );
